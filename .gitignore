@@ -1,4 +1,4 @@
-config/secret.yaml
+secret.yaml
 # Logs
 logs
 *.log
@@ -11,7 +11,6 @@ __pycache__
 *.conf
 *.db
 *.db-journal
-*.log
 *.noload
 *.txt
 *.sqlite
@@ -54,12 +53,47 @@ dlib_unknown_faces
 .pc-session
 google*.deb
 .homekit.state
-/config/.cloud/
-/config/home-assistant_v2.db-shm
-/config/home-assistant_v2.db-wal
-/config/zigbee.db-shm
-/config/zigbee.db-wal
-/config/custom_components/
-/config/www/community/
-/config/blueprints/
-/config/zigbee2mqtt/
+/.cloud/
+/home-assistant_v2.db-shm
+/home-assistant_v2.db-wal
+/zigbee.db-shm
+/zigbee.db-wal
+/custom_components/
+/www/community/
+/blueprints/
+/zigbee2mqtt/
+
+# Created by https://www.toptal.com/developers/gitignore/api/homeassistant
+# Edit at https://www.toptal.com/developers/gitignore?templates=homeassistant
+
+### HomeAssistant ###
+# Files with personal details
+*.crt
+*.csr
+*.key
+.uuid
+icloud/
+harmony_media_room.conf
+home-assistant.db
+home-assistant_v2.db
+home-assistant_v2.db-*
+html5_push_registrations.conf
+phue.conf
+plex.conf
+pyozw.sqlite
+tradfri.conf
+
+# Temporary files
+*.pid
+
+# automatically downloaded dependencies
+lib
+www
+
+# Log files
+home-assistant.log
+ozw_log.txt
+
+# Development files
+custom_components/
+
