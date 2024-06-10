@@ -1,0 +1,387 @@
+# Loads default set of integrations. Do not remove.
+default_config:
+
+# Load frontend themes from the themes folder
+frontend:
+  themes: !include_dir_merge_named themes
+  extra_module_url:
+    - /local/card-mod.js
+
+# +----------------------------------------------------------------------------+
+# | Cloudflare proxy settings                                                   |
+# +----------------------------------------------------------------------------+
+
+http:
+  use_x_forwarded_for: true
+  trusted_proxies:
+    - 172.30.33.0/24
+
+# +----------------------------------------------------------------------------+
+# | Setting for resources                                                      |
+# +----------------------------------------------------------------------------+
+lovelace:
+  mode: yaml
+  resources:
+    [
+      { url: /hacsfiles/lovelace-layout-card/layout-card.js, type: module },
+      {
+        url: /hacsfiles/lovelace-hue-like-light-card/hue-like-light-card.js,
+        type: module,
+      },
+      { url: /hacsfiles/stack-in-card/stack-in-card.js, type: module },
+      {
+        url: /hacsfiles/mini-media-player/mini-media-player-bundle.js,
+        type: module,
+      },
+      { url: /hacsfiles/lovelace-mushroom/mushroom.js, type: module },
+      { url: /hacsfiles/lovelace-ha-dashboard/ha-dashboard.js, type: module },
+      { url: /hacsfiles/lovelace-hui-element/hui-element.js, type: module },
+      { url: /hacsfiles/lovelace-clock-card/clock-card.js, type: module },
+      { url: /local/postnl-card/postnl-card.js, type: module },
+      { url: /hacsfiles/button-card/button-card.js, type: module },
+      { url: /hacsfiles/kiosk-mode/kiosk-mode.js, type: module },
+      { url: /hacsfiles/weather-card/weather-card.js, type: module },
+      { url: /hacsfiles/weather-card/weather-card-editor.js, type: module },
+      { url: /hacsfiles/numberbox-card/numberbox-card.js, type: module },
+      {
+        url: /local/community/atomic-calendar-revive/atomic-calendar-revive.js,
+        type: module,
+      },
+      { url: /hacsfiles/lovelace-card-mod/card-mod.js, type: module },
+      { url: /local/community/swipe-card/swipe-card.js, type: module },
+      {
+        url: /local/community/decluttering-card/decluttering-card.js,
+        type: module,
+      },
+      { url: "/local/fonts.css?v=2.1", type: css },
+      { url: "/local/community/homeos/homeos-delivery-card.js", type: module },
+      {
+        url: "/hacsfiles/polr-ytube-media-card/polr-ytube-media-card.js",
+        type: module,
+      },
+    ]
+
+# +----------------------------------------------------------------------------+
+# | Meteo Alarm Binary Sensor                                                  |
+# +----------------------------------------------------------------------------+
+
+binary_sensor:
+  - platform: meteoalarm
+    name: "MeteoAlarm Noord-Holland"
+    country: "netherlands"
+    province: "Noord-Holland"
+
+template:
+  - sensor:
+      # MeteoAlarm Noord-Holland
+      - name: MeteoAlarm Noord-Holland - Event
+        unique_id: maf_event
+        state: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'event') }}"
+        icon: mdi:shield-sun-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'event') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Type
+        unique_id: maf_type
+        state: >
+          {% set mat = state_attr('binary_sensor.meteoalarm_noord_holland', 'awareness_type').split("; ")[0] %}
+          {% if mat == "1" %}
+            Wind
+          {% elif mat == "2" %}
+            Snow - Ice
+          {% elif mat == "3" %}
+            Thunderstorms
+          {% elif mat == "4" %}
+            Fog
+          {% elif mat == "5" %}
+            Extreme high temperature
+          {% elif mat == "6" %}
+            Extreme low temperature
+          {% elif mat == "7" %}
+            Coastal event
+          {% elif mat == "8" %}
+            Forestfire
+          {% elif mat == "9" %}
+            Avalanges
+          {% elif mat == "10" %}
+            Rain
+          {% elif mat == "12" %}
+            Flood
+          {% elif mat == "13" %}
+            Rain - Flood
+          {% else %}
+            Unknown
+          {% endif %}
+        icon: mdi:shield-sun-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'awareness_type') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Level
+        unique_id: maf_level
+        state: >
+          {% set mal = state_attr('binary_sensor.meteoalarm_noord_holland', 'awareness_level').split("; ")[0] %}
+          {% if mal == "1" %}
+            Green
+          {% elif mal == "2" %}
+            Yellow
+          {% elif mal == "3" %}
+            Orange
+          {% elif mal == "4" %}
+            Red
+          {% else %}
+            Unknown
+          {% endif %}
+        icon: mdi:shield-sun-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'awareness_level') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Effective
+        unique_id: maf_effective
+        state: "{{ as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'effective')) | timestamp_custom('%d %b %H:%M') }}"
+        icon: mdi:clipboard-text-clock-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'effective') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Effective Day
+        unique_id: maf_effectiveday
+        state: >
+          {% set ts_effective = as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'effective')) %}
+          {% set tstring = ts_effective | timestamp_custom('%Y-%m-%d %H:%M:%S') %}
+          {% set effectivetime = ts_effective | timestamp_custom( 'at %H:%M') %}
+          {% set tz = now().timestamp() | timestamp_custom('%z') %}
+          {% set date = strptime(tstring+tz, '%Y-%m-%d %H:%M:%S%z') %}
+          {% set cdate = now().replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0) %}
+          {% set change = (date - cdate).days %}
+          {% if change == -2 %}
+            two days ago {{ effectivetime }}
+          {% elif change == -1 %}
+            yesterday {{ effectivetime }}
+          {% elif change == 0 %}
+            today {{ effectivetime }}
+          {% elif change == 1 %}
+            tomorrow {{ effectivetime }}
+          {% elif change == 2 %}
+            in two days {{ effectivetime }}
+          {% else %}
+            {% set days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+            {% set months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+            {{ days[date.weekday()] }} {{ date.day }} {{ months[date.month-1] }} {{ effectivetime }}
+          {% endif %}
+        icon: mdi:clipboard-text-clock-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'effective') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Onset
+        unique_id: maf_onset
+        state: "{{ as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'onset')) | timestamp_custom('%d %b %H:%M') }}"
+        icon: mdi:clipboard-text-clock-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'onset') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Onset Day
+        unique_id: maf_onsetday
+        state: >
+          {% set ts_onset = as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'onset')) %}
+          {% set tstring = ts_onset | timestamp_custom('%Y-%m-%d %H:%M:%S') %}
+          {% set onsettime = ts_onset | timestamp_custom( 'at %H:%M') %}
+          {% set tz = now().timestamp() | timestamp_custom('%z') %}
+          {% set date = strptime(tstring+tz, '%Y-%m-%d %H:%M:%S%z') %}
+          {% set cdate = now().replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0) %}
+          {% set change = (date - cdate).days %}
+          {% if change == -2 %}
+            two days ago {{ onsettime }}
+          {% elif change == -1 %}
+            yesterday {{ onsettime }}
+          {% elif change == 0 %}
+            today {{ onsettime }}
+          {% elif change == 1 %}
+            tomorrow {{ onsettime }}
+          {% elif change == 2 %}
+            in two days {{ onsettime }}
+          {% else %}
+            {% set days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+            {% set months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+            {{ days[date.weekday()] }} {{ date.day }} {{ months[date.month-1] }} {{ onsettime }}
+          {% endif %}
+        icon: mdi:clipboard-text-clock-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'onset') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Expires
+        unique_id: maf_expires
+        state: "{{ as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'expires')) | timestamp_custom('%d %b %H:%M') }}"
+        icon: mdi:clipboard-text-clock-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'expires') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Expires Day
+        unique_id: maf_expiresday
+        state: >
+          {% set ts_expires = as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'expires')) %}
+          {% set tstring = ts_expires | timestamp_custom('%Y-%m-%d %H:%M:%S') %}
+          {% set expirestime = ts_expires | timestamp_custom( 'at %H:%M') %}
+          {% set tz = now().timestamp() | timestamp_custom('%z') %}
+          {% set date = strptime(tstring+tz, '%Y-%m-%d %H:%M:%S%z') %}
+          {% set cdate = now().replace(hour=0).replace(minute=0).replace(second=0).replace(microsecond=0) %}
+          {% set change = (date - cdate).days %}
+          {% if change == -2 %}
+            two days ago {{ expirestime }}
+          {% elif change == -1 %}
+            yesterday {{ expirestime }}
+          {% elif change == 0 %}
+            today {{ expirestime }}
+          {% elif change == 1 %}
+            tomorrow {{ expirestime }}
+          {% elif change == 2 %}
+            in two days {{ expirestime }}
+          {% else %}
+            {% set days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] %}
+            {% set months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"] %}
+            {{ days[date.weekday()] }} {{ date.day }} {{ months[date.month-1] }} {{ expirestime }}
+          {% endif %}
+        icon: mdi:clipboard-text-clock-outline
+        availability: "{{ state_attr('binary_sensor.meteoalarm_noord_holland', 'expires') not in ['unknown', 'unavailable'] }}"
+      - name: MeteoAlarm Noord-Holland - Current
+        unique_id: maf_current
+        state: >
+          {% set bma = states( 'binary_sensor.meteoalarm_noord_holland' ) %}
+          {% if bma == 'off' %}
+            No alarm
+          {% else %}
+            {% set ts_onset = as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'onset')) %}
+            {% set ts_expires = as_timestamp(state_attr('binary_sensor.meteoalarm_noord_holland', 'expires')) %}
+            {% set tz = now().timestamp() %}
+            {% if tz < ts_onset %}
+              Future: {{ states( 'sensor.MeteoAlarm_Noord_Holland_level' ) }} alarm for {{ states( 'sensor.MeteoAlarm_Noord_Holland_type' ) }}
+            {% elif tz > ts_onset and tz < ts_expires %}
+              {{ states( 'sensor.MeteoAlarm_Noord_Holland_level' ) }} alarm: {{ states( 'sensor.MeteoAlarm_Noord_Holland_type' ) }}
+            {% else %}
+              Expired {{ states( 'sensor.MeteoAlarm_Noord_Holland_level' ) }} alarm for {{ states( 'sensor.MeteoAlarm_Noord_Holland_type' ) }}
+            {% endif %}
+          {% endif %}
+        icon: >
+          {% set bma = states( 'binary_sensor.meteoalarm_noord_holland' ) %}
+          {% if bma == 'off' %}
+            mdi:shield-sun-outline
+          {% else %}
+            {% set mat = state_attr('binary_sensor.meteoalarm_noord_holland', 'awareness_type').split("; ")[0] %}
+            {% if mat == "1" %}
+              mdi:weather-windy
+            {% elif mat == "2" %}
+              mdi:weather-snowy-heavy
+            {% elif mat == "3" %}
+              mdi:weather-lightning
+            {% elif mat == "4" %}
+              mdi:weather-fog
+            {% elif mat == "5" %}
+              mdi:sun-thermometer-outline
+            {% elif mat == "6" %}
+              mdi:snowflake-thermometer
+            {% elif mat == "7" %}
+              mdi:shore
+            {% elif mat == "8" %}
+              mdi:pine-tree-fire
+            {% elif mat == "9" %}
+              mdi:landslide
+            {% elif mat == "10" %}
+              mdi:weather-pouring
+            {% elif mat == "12" %}
+              mdi:home-flood
+            {% elif mat == "13" %}
+              mdi:waves-arrow-up
+            {% else %}
+              mdi:shield-sun-outline
+            {% endif %}
+          {% endif %}
+        availability: "{{ states('binary_sensor.meteoalarm_noord_holland') not in ['unknown', 'unavailable'] }}"
+
+# +----------------------------------------------------------------------------+
+# | HVC Groep Sensor                                                           |
+# +----------------------------------------------------------------------------+
+
+sensor:
+  - platform: hvcgroep
+    postcode: 1827EN
+    huisnummer: 11
+    resources:
+      - gft
+      - plastic
+      - papier
+      - restafval
+      - reiniging
+    date_format_default: "%d-%m-%Y"
+    date_format_tomorrow: "Morgen %d-%m-%Y"
+    date_format_today: "Vandaag %d-%m-%Y"
+
+  - platform: template
+    sensors:
+      afval_vandaag:
+        friendly_name: "Vandaag"
+        value_template: >-
+          {% set afval = '' %}
+          {% if is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Vandaag') %}
+          {% set afval = 'Groene Bak' %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Vandaag') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Blauwe Bak' %}
+            {% else %}
+              {% set afval = 'Blauwe Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_plastic_en_verpakking', 'day', 'Vandaag') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Plastic' %}
+            {% else %}
+              {% set afval = 'Plastic' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Vandaag') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Grijze Bak' %}
+            {% else %}
+              {% set afval = 'Grijze Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if afval|length %}
+            {{afval}}
+          {% else %}
+            Geen
+          {% endif %}
+
+  - platform: template
+    sensors:
+      afval_morgen:
+        friendly_name: "Morgen"
+        value_template: >-
+          {% set afval = '' %}
+          {% if is_state_attr('sensor.hvc_groep_groene_bak_gft', 'day', 'Morgen') %}
+          {% set afval = 'Groene Bak' %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_blauwe_bak_papier', 'day', 'Morgen') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Blauwe Bak' %}
+            {% else %}
+              {% set afval = 'Blauwe Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_plastic_en_verpakking', 'day', 'Morgen') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Plastic' %}
+            {% else %}
+              {% set afval = 'Plastic' %}
+            {% endif %}
+          {% endif %}
+          {% if is_state_attr('sensor.hvc_groep_grijze_bak_restafval', 'day', 'Morgen') %}
+            {% if afval|length %}
+              {% set afval = afval + ' + Grijze Bak' %}
+            {% else %}
+              {% set afval = 'Grijze Bak' %}
+            {% endif %}
+          {% endif %}
+          {% if afval|length %}
+            {{afval}}
+          {% else %}
+            Geen
+          {% endif %}
+
+# +----------------------------------------------------------------------------+
+# | HA Defaults                                                     |
+# +----------------------------------------------------------------------------+
+
+automation: !include automations.yaml
+script: !include scripts.yaml
+scene: !include scenes.yaml
+
+ffmpeg:
+
+camera:
+  - platform: ffmpeg
+    name: Rotated Camera
+    input: http://192y.168.2.10:2971/camera/streaml
+    extra_arguments: -vf "transpose=2,transpose=2"
+
