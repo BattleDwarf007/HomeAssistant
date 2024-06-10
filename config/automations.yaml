@@ -1,0 +1,12 @@
+- id: '1712964707200'
+  alias: Katkos
+  description: ''
+  trigger: []
+  condition: []
+  action:
+  - device_id: 15b777ed952ec1d0fd2187a5230830e0
+    domain: number
+    entity_id: 4c601ef4e833c0a9f599ef3514cb5169
+    type: set_value
+    value: 1
+  mode: single
